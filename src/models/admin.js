@@ -11,6 +11,26 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      // Payrolls created by this admin
+      Admin.hasMany(models.Payroll, {
+        foreignKey: "created_by",
+        as: "payrolls_created"
+      });
+      // Payrolls updated by this admin
+      Admin.hasMany(models.Payroll, {
+        foreignKey: "updated_by",
+        as: "payrolls_updated"
+      });
+      // Payslips created by this admin
+      Admin.hasMany(models.Payslip, {
+        foreignKey: "created_by",
+        as: "payslips_created"
+      });
+      // Payslips updated by this admin
+      Admin.hasMany(models.Payslip, {
+        foreignKey: "updated_by",
+        as: "payslips_updated"
+      });
     }
   }
   Admin.init({
@@ -38,11 +58,18 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE,
       defaultValue: sequelize.fn('NOW')
-    }},
+    },
+    is_deleted: {
+      allowNull: false,
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
+  },
    {
     sequelize,
     tableName: 'admins',
     modelName: 'Admin',
+    timestamps: false,
   });
   return Admin;
 };

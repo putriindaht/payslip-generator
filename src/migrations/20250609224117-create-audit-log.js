@@ -2,25 +2,48 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('employees', {
+    await queryInterface.createTable('audit_logs', {
       id: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
-      username: {
+      record_id: {
+        type: Sequelize.UUID,
         allowNull: false,
-        unique: true,
-        type: Sequelize.STRING
       },
-      password: {
+      table_name: {
+        type: Sequelize.STRING,
         allowNull: false,
-        type: Sequelize.TEXT
       },
-      salary: {
+      operation: {
+        type: Sequelize.STRING,
         allowNull: false,
-        type: Sequelize.INTEGER
+      },
+      request_ip: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      request_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      created_by: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      created_by_type: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      updated_by: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      updated_by_type: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       created_at: {
         allowNull: false,
@@ -40,6 +63,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('employees');
+    await queryInterface.dropTable('Audit_logs');
   }
 };

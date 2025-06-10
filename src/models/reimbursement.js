@@ -3,20 +3,27 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Attendance extends Model {
+  class Reimbursement extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
     static associate(models) {
-      // The employee this attendance record belongs to
-      Attendance.belongsTo(models.Employee, { foreignKey: "employee_id", as: "employee" });
-      // The employee who created the record
-      Attendance.belongsTo(models.Employee, { foreignKey: "created_by", as: "creator" });
-      // The employee who last updated the record
-      Attendance.belongsTo(models.Employee, { foreignKey: "updated_by", as: "updater" });
+      // define association here
+      // The employee this reimbursement belongs to
+      Reimbursement.belongsTo(models.Employee, { foreignKey: "employee_id", as: "employee" });
+      // The employee who created the reimbursement record
+      Reimbursement.belongsTo(models.Employee, { foreignKey: "created_by", as: "creator" });
+      // The employee who updated the reimbursement record
+      Reimbursement.belongsTo(models.Employee, { foreignKey: "updated_by", as: "updater" });
+          
     }
   }
-  Attendance.init({
-    id: {
+  Reimbursement.init({
+    id:{
       type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4, // Generates UUID automatically
+      defaultValue: DataTypes.UUIDV4,
       allowNull: false,
       primaryKey: true
     },
@@ -30,13 +37,17 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: "CASCADE",
       onUpdate: "CASCADE"
     },
-    check_in_time: {
-      type: DataTypes.DATE,
-      allowNull: true
+    amount: {
+      type:DataTypes.INTEGER,
+      allowNull: false
     },
-    check_out_time: {
-      type: DataTypes.DATE,
-      allowNull: true
+    description: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    request_id: {
+      type: DataTypes.UUID,
+      allowNull: false
     },
     created_by: {
       type: DataTypes.UUID,
@@ -58,10 +69,6 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: "CASCADE",
       onUpdate: "CASCADE"
     },
-    request_id: {
-      type: DataTypes.UUID,
-      allowNull: false
-    },
     created_at: {
       allowNull: false,
       type: DataTypes.DATE,
@@ -79,9 +86,9 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     sequelize,
-    tableName: 'attendance',
-    modelName: 'Attendance',
+    modelName: 'Reimbursement',
+    tableName: 'reimbursement',
     timestamps: false,
   });
-  return Attendance;
+  return Reimbursement;
 };

@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('attendances', {
+    await queryInterface.createTable('reimbursements', {
       id: {
         allowNull: false,
         primaryKey: true,
@@ -10,8 +10,8 @@ module.exports = {
         defaultValue: Sequelize.UUIDV4
       },
       employee_id: {
-        allowNull: false,
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
           model: 'employees',
           key: 'id'
@@ -19,15 +19,21 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      check_in_time: {
-        type: Sequelize.DATE
+      amount: {
+        type: Sequelize.INTEGER,
+         allowNull: false,
       },
-      check_out_time: {
-        type: Sequelize.DATE
+      description: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      request_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
       },
       created_by: {
-        allowNull: false,
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
           model: 'employees',
           key: 'id'
@@ -36,8 +42,8 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       updated_by: {
-        allowNull: false,
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
           model: 'employees',
           key: 'id'
@@ -45,14 +51,10 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      request_id: {
-        allowNull: false,
-        type: Sequelize.UUID
-      },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.fn('NOW'),
+        defaultValue: Sequelize.fn('NOW')
       },
       updated_at: {
         allowNull: false,
@@ -67,6 +69,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('attendances');
+    await queryInterface.dropTable('Reimbursements');
   }
 };

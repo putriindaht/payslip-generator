@@ -27,7 +27,11 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn('NOW')
       },
-    
+      is_deleted: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      }
     });
   },
   async down(queryInterface, Sequelize) {

@@ -2,57 +2,57 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('attendances', {
+    await queryInterface.createTable('payrolls', {
       id: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4
       },
-      employee_id: {
+      period_start: {
         allowNull: false,
-        type: Sequelize.UUID,
-        references: {
-          model: 'employees',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
-      },
-      check_in_time: {
         type: Sequelize.DATE
       },
-      check_out_time: {
+      period_end: {
+        allowNull: false,
+        type: Sequelize.UUID
+      },
+      request_id: {
+        allowNull: false,
+        type: Sequelize.UUID
+      },
+      run_at: {
+        allowNull: true,
+        type: Sequelize.DATE
+      },
+      completed_at: {
+        allowNull: true,
         type: Sequelize.DATE
       },
       created_by: {
-        allowNull: false,
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
-          model: 'employees',
+          model: 'admins',
           key: 'id'
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
       updated_by: {
-        allowNull: false,
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
-          model: 'employees',
+          model: 'admins',
           key: 'id'
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      request_id: {
-        allowNull: false,
-        type: Sequelize.UUID
-      },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.fn('NOW'),
+        defaultValue: Sequelize.fn('NOW')
       },
       updated_at: {
         allowNull: false,
@@ -67,6 +67,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('attendances');
+    await queryInterface.dropTable('Payrolls');
   }
 };
