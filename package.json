@@ -6,12 +6,17 @@
   "scripts": {
     "start": "npx nodemon ./bin/www",
     "dev": "npx nodemon bin/www",
-    "migrate": "sequelize-cli db:migrate",
-    "seed": "sequelize-cli db:seed:all",
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage",
-    "migrate:test": "NODE_ENV=test npx sequelize-cli db:migrate",
-    "seed:test": "NODE_ENV=test npx sequelize-cli db:seed:all --seeders-path seeders/test"
+    "migrate": "npx sequelize-cli db:migrate --migrations-path=src/migrations --config=src/config/config.json",
+    "seed": "npx sequelize-cli db:seed:all --seeders-path=src/seeders --config=src/config/config.json",
+    "migrate:test": "NODE_ENV=test npx sequelize-cli db:migrate --migrations-path=src/migrations --config=src/config/config.json",
+    "seed:test": "NODE_ENV=test npx sequelize-cli db:seed:all --seeders-path=src/seeders/test --config=src/config/config.json",
+    "undo:migrate": "npx sequelize-cli db:migrate:undo --migrations-path=src/migrations --config=src/config/config.json",
+    "undo:migrate:all": "npx sequelize-cli db:migrate:undo:all --migrations-path=src/migrations --config=src/config/config.json",
+    "undo:seed:all": "npx sequelize-cli db:seed:undo:all --seeders-path=src/seeders --config=src/config/config.json",
+    "undo:migrate:test": "NODE_ENV=test npx sequelize-cli db:migrate:undo:all --migrations-path=src/migrations --config=src/config/config.json",
+    "undo:seed:test": "NODE_ENV=test npx sequelize-cli db:seed:undo:all --seeders-path=src/seeders/test --config=src/config/config.json"
   },
   "repository": {
     "type": "git",

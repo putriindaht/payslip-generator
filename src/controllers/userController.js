@@ -1,37 +1,25 @@
-const { Employee, Admin } = require("../models/")
-const { validatePassword } = require("../helpers/bcrypt")
-const { generateToken } = require("../helpers/jwt")
-const { HttpError } = require("../helpers/error")
+const { Admin } = require("../models/")
 const { findEmployee } = require("../helpers/services/employeeHelpers")
+const { handleLogin } = require("../helpers/loginHelper")
 
 class UserController {
     static async employeeLogin(req, res, next) {
         try {
             const { username, password } = req.body
 
-            // check employee
-            const employeeFound = await findEmployee(null, username)
-
-            if (!employeeFound) {
-                throw new HttpError(400, "Invalid username or password")
-            }
-
-            const isValidPassword = validatePassword(password, employeeFound.dataValues.password)
-            if (!isValidPassword) {
-               throw new HttpError(400, "Invalid username or password")
-            }
-
-            const token = generateToken({
-                id: employeeFound.id,
-                username: employeeFound.username,
+            const data = await handleLogin({
+                username,
+                password,
+                finder: async (username) => await findEmployee(null, username),
                 role: "employee"
-            })
+            });
 
             res.status(200).json({
                 status_code: 200,
-                id: employeeFound.id,
-                message: "Empployee Login Success",
-                access_token: token
+                id: data.id,
+                username: data.username,
+                message: `Employee ${data.username} login successfull`,
+                access_token: data.access_token
             })
 
         } catch (error) {
@@ -41,35 +29,21 @@ class UserController {
 
     static async adminLogin(req, res, next) {
         try {
-             const { username, password } = req.body
+            const { username, password } = req.body
 
-            // check admin
-            const adminFound = await Admin.findOne({
-                where: {
-                    username
-                }
-            })
-
-            if (!adminFound) {
-                throw new HttpError(400, "Invalid username or password")
-            }
-
-            const isValidPassword = validatePassword(password, adminFound.dataValues.password)
-            if (!isValidPassword) {
-               throw new HttpError(400, "Invalid username or password")
-            }
-
-            const token = generateToken({
-                id: adminFound.id,
-                username: adminFound.username,
+            const data = await handleLogin({
+                username,
+                password,
+                finder: async (username) => await Admin.findOne({ where: { username } }),
                 role: "admin"
-            })
+            });
 
             res.status(200).json({
                 status_code: 200,
-                id: adminFound.id,
-                message: "Admin Login Success",
-                access_token: token
+                id: data.id,
+                username: data.username,
+                message: `Admin ${data.username} login successfull`,
+                access_token: data.access_token
             })
 
         } catch (error) {

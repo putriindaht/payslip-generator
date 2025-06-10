@@ -100,10 +100,8 @@ class PayrollController {
             const run_at = new Date()
 
             const working_days = countWorkingDays(payrollFound.period_start, payrollFound.period_end)
-            console.log({working_days})
 
             const employees = await Employee.findAll()
-            // console.log(employees)
 
             const payslips = []
 
@@ -112,8 +110,7 @@ class PayrollController {
                 const salary_per_day = Math.floor(monthly_salary / working_days)
                 const salary_per_hour = Math.floor(salary_per_day / 8)
                 const overtime_rate = salary_per_hour * 2
-                // console.log({monthly_salary, salary_per_day, salary_per_hour, overtime_rate})
-
+    
                 // check attendace
                const [attendaceResult] = await sequelize.query(
                 `
@@ -156,7 +153,6 @@ class PayrollController {
                     }
                     );
 
-                    // console.log(overtimeResult.overtime_hours);
                 const overtime_hours = +overtimeResult.overtime_hours
                 const overtime_pay = +overtime_hours * +salary_per_hour
 
@@ -198,9 +194,6 @@ class PayrollController {
                 const reimbursement_total = total.reimbursement_total
                 const reimbursement_detail = detail.reimbursement_detail
 
-                // console.log(total.reimbursement_total);
-                // console.log(detail.reimbursement_detail); // will be a JSON array
-
                 const take_home_pay = attendance_pay + overtime_pay + Number(reimbursement_total)
 
                 const employee_payslip = {
@@ -224,28 +217,16 @@ class PayrollController {
                     updated_at: new Date(),
                 }
 
-                // if (employees[i].id == 'c2422b77-5fc8-4c1b-9a84-1d2f1a26c963') {
-                //     console.log("ha")
-                //     console.log(employee_payslip, "jjj")
-                // }
                 payslips.push(employee_payslip)
     
             }
-
-            // console.log(payslips, "pay")
-
-            payslips.forEach((el) => {
-                if (el.employee_id == "c2422b77-5fc8-4c1b-9a84-1d2f1a26c963") {
-                    console.log("jouo", el)
-                }
-            })
 
             // - add bulk to payslips table
             const payslips_data = await Payslip.bulkCreate(payslips)
 
             const completed_at = new Date()
 
-            await Payroll.update(
+            const payroll = await Payroll.update(
                 {
                     run_at,
                     completed_at,
@@ -264,7 +245,8 @@ class PayrollController {
             
             res.status(200).json({
                 status_code: 200,
-                // data,
+                message: "Payroll completed",
+                data: payroll
             })
 
         } catch (error) {
