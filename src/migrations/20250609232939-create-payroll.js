@@ -15,7 +15,7 @@ module.exports = {
       },
       period_end: {
         allowNull: false,
-        type: Sequelize.UUID
+        type: Sequelize.DATE
       },
       request_id: {
         allowNull: false,

@@ -153,8 +153,4 @@ describe('Attendance Check-In Endpoint', () => {
         expect(res.body).toHaveProperty('error');
     });
 
-
-
-
-
 });

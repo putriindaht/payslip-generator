@@ -29,6 +29,7 @@ class UserController {
 
             res.status(200).json({
                 status_code: 200,
+                id: employeeFound.id,
                 message: "Empployee Login Success",
                 access_token: token
             })
@@ -66,7 +67,8 @@ class UserController {
 
             res.status(200).json({
                 status_code: 200,
-                message: "Empployee Login Success",
+                id: adminFound.id,
+                message: "Admin Login Success",
                 access_token: token
             })
 
