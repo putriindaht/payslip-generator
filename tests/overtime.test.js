@@ -1,147 +1,179 @@
+jest.mock('../src/helpers/attendanceHelper', () => {
+  return jest.fn();
+});
+
 const request = require('supertest');
 const { app } = require('../src/app');
-const { Overtime, Attendance } = require('../src/models');
-const { v4: uuidv4 } = require('uuid');
+const { Attendance, Overtime } = require('../src/models');
+const { generateRequestId } = require('../src/helpers/generateRequestId');
+const isWeekendInJakarta = require('../src/helpers/attendanceHelper');
 
-// Assume you have helper to mock Jakarta date
-jest.mock('../src/helpers/jakartaTime', () => jest.fn());
+let employeeToken;
+let employeeId;
 
-const getJakartaNow = require('../src/helpers/jakartaTime');
-
-describe('Overtime Submission', () => {
-    let employeeToken;
-    let employeeId
-
-    beforeAll(async () => {
+beforeAll(async () => {
+    // employee login
     const res = await request(app)
-        .post('/login/employee')
-        .send({ username: 'employee_01', password: 'password123' });
+    .post('/login/employee')
+    .send({ username: 'employee_01', password: 'password123' });
 
-        employeeToken = res.body.access_token;
-        employeeId = res.body.id
-    });
+    employeeToken = res.body.access_token;
+    employeeId = res.body.id;
+});
 
-    afterEach(async () => {
-        await Overtime.destroy({ where: {employee_id: employeeId} }); // Clean up overtime
-        await Attendance.destroy({ where: {employee_id: employeeId} }); // Clean up attendance
-        jest.resetAllMocks();
-    });
+afterAll(async () => {
+    await Attendance.destroy({ where: {employee_id: employeeId} });
+    await Overtime.destroy({ where: {employee_id: employeeId} });
+});
 
-    it('should allow up to 3 hours overtime per day', async () => {
-        // Set today to a weekday, 6pm Jakarta time
-        getJakartaNow.mockReturnValue(new Date('2025-06-11T18:00:00+07:00'));
+describe('POST /overtimes', () => {
+    const url = '/overtimes';
 
-        // Submit 2 hours first
-        let res = await request(app)
-        .post('/overtimes')
+    it('should reject hours_number > 3', async () => {
+        const res = await request(app)
+        .post(url)
         .set('Authorization', `Bearer ${employeeToken}`)
+        .send({ hours_number: 4 });
+
+        expect(res.status).toBe(400);
+    });
+
+    it('should reject when token invalid', async () => {
+        const res = await request(app)
+        .post(url)
+        .set('Authorization', `Bearer invalidtoken`)
         .send({ hours_number: 2 });
 
-        expect(res.statusCode).toBe(200);
-
-        // Submit 1 more hour (total = 3)
-        res = await request(app)
-        .post('/overtimes')
-        .set('Authorization', `Bearer ${employeeToken}`)
-        .send({ hours_number: 1 });
-
-        expect(res.statusCode).toBe(200);
-
-        // Try to submit 1 more hour (should be rejected)
-        res = await request(app)
-        .post('/overtimes')
-        .set('Authorization', `Bearer ${employeeToken}`)
-        .send({ hours_number: 1 });
-
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty('error');
+        expect(res.status).toBe(401);
     });
 
-    // it('should allow overtime after 5pm on weekdays', async () => {
-    //     // Set today to a Wednesday, 6pm
-    //     getJakartaNow.mockReturnValue(new Date('2025-06-12T18:00:00+07:00'));
+    describe('weekday rules', () => {
+        beforeEach(async () => {
+            // // clear attendance and overtime
+            await Attendance.destroy({ where: {employee_id: employeeId} });
+            await Overtime.destroy({ where: {employee_id: employeeId} });
+        });
 
-    //     const res = await request(app)
-    //     .post('/overtimes')
-    //     .set('Authorization', `Bearer ${employeeToken}`)
-    //     .send({ hours_number: 1 });
+        it('should reject if no checkout and before 5pm', async () => {
+            // create attendance without check_out_time
+            await Attendance.create({
+                employee_id: employeeId,
+                check_in_time: new Date('2025-06-02T08:00:00+07:00'),
+                updated_by: employeeId,
+                created_by: employeeId,
+                request_id: generateRequestId(),
+                request_ip: '127.0.0.1',
+             });
 
-    //     expect(res.statusCode).toBe(200);
-    // });
+            const res = await request(app)
+                .post(url)
+                .set('Authorization', `Bearer ${employeeToken}`)
+                .send({ hours_number: 1 });
 
-    // it('should allow overtime after checking out on weekdays before 5pm', async () => {
-    //     // Set today to a Wednesday, 3pm
-    //     getJakartaNow.mockReturnValue(new Date('2025-06-11T15:00:00+07:00'));
+            expect(res.status).toBe(400);
+        });
 
-    //     // Create an attendance record with check_out_time
-    //     await Attendance.create({
-    //         id: uuidv4(),
-    //         employee_id: employeeId, // use your employee id
-    //         check_in_time: new Date('2025-06-11T08:00:00+07:00'),
-    //         check_out_time: new Date('2025-06-11T14:30:00+07:00'),
-    //         created_by: employeeId,
-    //         updated_by: employeeId,
-    //         request_id: uuidv4(),
-    //         request_ip: '127.0.0.1',
-    //         created_at: new Date(),
-    //         updated_at: new Date(),
-    //         is_deleted: false
-    //     });
+        it('should allow after checkout', async () => {
+            jest.useFakeTimers('modern');
+            jest.setSystemTime(new Date('2025-06-02T17:30:00+07:00'));
+            await Attendance.create({
+                employee_id: employeeId,
+                check_in_time: new Date('2025-06-02T08:00:00+07:00'),
+                check_out_time: new Date('2025-06-02T15:00:00+07:00'),
+                updated_by: employeeId,
+                created_by: employeeId,
+                request_id: generateRequestId(),
+                request_ip: '127.0.0.1',
+            });
 
-    //     const res = await request(app)
-    //     .post('/overtimes')
-    //     .set('Authorization', `Bearer ${employeeToken}`)
-    //     .send({ hours_number: 2 });
+            const res = await request(app)
+                .post(url)
+                .set('Authorization', `Bearer ${employeeToken}`)
+                .send({ hours_number: 2 });
 
-    //     expect(res.statusCode).toBe(200);
-    // });
+            expect(res.status).toBe(200);
 
-    //   it('should reject overtime before 5pm on weekdays if not checked out', async () => {
-    //     // Set today to a Wednesday, 3pm
-    //     getJakartaNow.mockReturnValue(new Date('2025-06-11T15:00:00+07:00'));
+            jest.useRealTimers();
+        });
 
-    //     // No attendance or check_out_time for today
+        it('should allow after 5pm even without checkout', async () => {
+            jest.useFakeTimers('modern');
+            jest.setSystemTime(new Date('2025-06-02T17:30:00+07:00'));
 
-    //     const res = await request(app)
-    //       .post('/overtimes')
-    //       .set('Authorization', `Bearer ${employeeToken}`)
-    //       .send({ hours_number: 1 });
+            await Attendance.create({
+                employee_id: employeeId,
+                check_in_time: new Date('2025-06-02T09:00:00+07:00'),
+                updated_by: employeeId,
+                created_by: employeeId,
+                request_id: generateRequestId(),
+                request_ip: '127.0.0.1',
 
-    //     expect(res.statusCode).toBe(400);
-    //     expect(res.body.message).toMatch(/after checking out or after 5pm/i);
-    //   });
+            });
 
-    //   it('should allow overtime anytime on weekends (Saturday/Sunday)', async () => {
-    //     // Set today to a Saturday, 2pm
-    //     getJakartaNow.mockReturnValue(new Date('2025-06-14T14:00:00+07:00'));
+            const res = await request(app)
+                .post(url)
+                .set('Authorization', `Bearer ${employeeToken}`)
+                .send({ hours_number: 1 });
 
-    //     const res = await request(app)
-    //       .post('/overtimes')
-    //       .set('Authorization', `Bearer ${employeeToken}`)
-    //       .send({ hours_number: 3 });
+            expect(res.status).toBe(200);
 
-    //     expect(res.statusCode).toBe(200);
-    //   });
+            jest.useRealTimers();
+        });
+    });
 
-    //   it('should still enforce 3 hour max on weekends', async () => {
-    //     // Set today to Sunday
-    //     getJakartaNow.mockReturnValue(new Date('2025-06-15T12:00:00+07:00'));
+  describe('daily limit', () => {
+        beforeEach(async () => {
+            jest.useFakeTimers('modern');
+            jest.setSystemTime(new Date('2025-06-03T18:00:00+07:00'));
+            // Force weekday
+            isWeekendInJakarta.mockReturnValue(false);
 
-    //     // Submit 2 hours
-    //     let res = await request(app)
-    //       .post('/overtimes')
-    //       .set('Authorization', `Bearer ${employeeToken}`)
-    //       .send({ hours_number: 2 });
+            // clear attendance and overtime
+            await Attendance.destroy({ where: {employee_id: employeeId} });
+            await Overtime.destroy({ where: {employee_id: employeeId} });
 
-    //     expect(res.statusCode).toBe(200);
+            // create new attendance and overtime
+            await Attendance.create({
+                employee_id: employeeId,
+                check_in_time: new Date('2025-06-03T08:00:00+07:00'),
+                check_out_time: new Date('2025-06-03T17:00:00+07:00'),
+                created_by: employeeId,
+                updated_by: employeeId,
+                request_id: generateRequestId(),
+                request_ip: '127.0.0.1',
+            });
 
-    //     // Submit another 2 hours (should be rejected)
-    //     res = await request(app)
-    //       .post('/overtimes')
-    //       .set('Authorization', `Bearer ${employeeToken}`)
-    //       .send({ hours_number: 2 });
+            await Overtime.create({
+                employee_id: employeeId,
+                hours_number: 2,
+                created_at: new Date('2025-06-03T09:00:00+07:00'),
+                created_by: employeeId,
+                updated_by: employeeId,
+                request_id: generateRequestId(),
+                request_ip: '127.0.0.1',
+            });
+        });
 
-    //     expect(res.statusCode).toBe(400);
-    //     expect(res.body.message).toMatch(/maximum is 3 hours per day/i);
-    //   });
+        it('should reject if total overtime exceeds 3', async () => {
+            const res = await request(app)
+                .post(url)
+                .set('Authorization', `Bearer ${employeeToken}`)
+                .send({ hours_number: 2 });
+
+            expect(res.status).toBe(400);
+        
+            jest.useRealTimers();
+        });
+
+        it('should allow if within daily limit', async () => {
+            const res = await request(app)
+                .post(url)
+                .set('Authorization', `Bearer ${employeeToken}`)
+                .send({ hours_number: 1 });
+
+            expect(res.status).toBe(200);
+
+            jest.useRealTimers();
+        });
+    });
 });

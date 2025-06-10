@@ -4,6 +4,7 @@ const { generateRequestId } = require("../helpers/generateRequestId")
 const { findEmployee } = require("../helpers/services/employeeHelpers");
 const { countWorkingDays } = require("../helpers/services/payrollAndPayslipHelpers");
 const { Admin, Payroll, Employee, Attendance, sequelize, Payslip } = require("../models/");
+const { Op } = require("sequelize");
 
 function isValidDateFormat(dateStr) {
     const regex = /^\d{2}-\d{2}-\d{4}$/;
@@ -37,25 +38,24 @@ class PayrollController {
 
             const startDate = parseDdMmYyyyToDate(period_start);
             const endDate = parseDdMmYyyyToDate(period_end);
+            if (endDate <= startDate) throw new HttpError(400, "period_end must be after period_start");
 
-            console.log({startDate, endDate})
-
+            // check admin
             const adminFound = await Admin.findOne({ where: {id: admin_id, username} });
             if (!adminFound) throw new HttpError(404, "Admin not found")
             
-            
-
+            // check existing payroll period
             const payrollPeriodFound = await Payroll.findOne({
                 where: {
-                    period_start: startDate,
-                    period_end: endDate
+                    [Op.and]: [
+                        { period_start: { [Op.lte]: endDate } },
+                        { period_end:   { [Op.gte]: startDate } },
+                    ],
                 }
             })
 
-            console.log(payrollPeriodFound, "admin found")
-
             if (payrollPeriodFound) {
-                throw new HttpError(400, "Payroll in that period only can run once")
+                throw new HttpError(400, "Payroll period overlaps with an existing one")
             }
             
             const data = await Payroll.create({
@@ -67,8 +67,8 @@ class PayrollController {
                 request_id: generateRequestId()
             });
             
-            res.status(200).json({
-                status_code: 200,
+            res.status(201).json({
+                status_code: 201,
                 data,
             })
 
@@ -93,6 +93,7 @@ class PayrollController {
             if (!payrollFound) throw new HttpError(404, "Payroll not found")
             
             if (payrollFound.run_at || payrollFound.completed_at) {
+                console.log("masuuk isini")
                 throw new HttpError(400, "Payroll in that period only can run once")
             }
 
