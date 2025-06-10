@@ -2,6 +2,7 @@ const { Employee, Admin } = require("../models/")
 const { validatePassword } = require("../helpers/bcrypt")
 const { generateToken } = require("../helpers/jwt")
 const { HttpError } = require("../helpers/error")
+const { findEmployeeOrThrow } = require("../helpers/services/employeeHelpers")
 
 class UserController {
     static async employeeLogin(req, res, next) {
@@ -9,11 +10,7 @@ class UserController {
             const { username, password } = req.body
 
             // check employee
-            const employeeFound = await Employee.findOne({
-                where: {
-                    username
-                }
-            })
+            const employeeFound = await findEmployeeOrThrow(null, username)
 
             if (!employeeFound) {
                 throw new HttpError(400, "Invalid username or password")
@@ -44,7 +41,6 @@ class UserController {
     static async adminLogin(req, res, next) {
         try {
              const { username, password } = req.body
-             console.log({username, password})
 
             // check admin
             const adminFound = await Admin.findOne({

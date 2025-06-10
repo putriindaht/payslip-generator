@@ -63,6 +63,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Audit_logs');
+    await queryInterface.dropTable('audit_logs');
   }
 };

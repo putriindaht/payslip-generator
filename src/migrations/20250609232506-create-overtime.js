@@ -65,6 +65,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Overtimes');
+    await queryInterface.dropTable('overtimes');
   }
 };

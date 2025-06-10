@@ -75,6 +75,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    request_ip: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     sequelize,

@@ -120,6 +120,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Payslips');
+    await queryInterface.dropTable('payslips');
   }
 };

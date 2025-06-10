@@ -10,5 +10,6 @@ router.post("/login/admin", UserController.adminLogin);
 
 router.use(authentication)
 router.post("/check-ins", AttendaceController.employeeCheckIn);
+router.patch("/check-outs/:id", AttendaceController.employeeCheckOut);
 
 module.exports = router
