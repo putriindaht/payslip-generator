@@ -1,19 +1,19 @@
 const { Employee } = require("../../models");
 const { HttpError } = require("../error");
 
-async function findEmployeeOrThrow(id = null, username = null) {
+async function findEmployee(id = null, username = null) {
     try {
         const where = {};
         if (id) where.id = id;
         if (username) where.username = username;
 
         const employee = await Employee.findOne({ where });
-        if (!employee) throw new HttpError(404, "Employee not found");
+        if (!employee) return null
         return employee;
     } catch (error) {
-        console.error("error in findEmployeeOrThrow: ", error)
-        throw error
+        console.error("error in findEmployee: ", error)
+        return null
     }
 }
 
-module.exports = { findEmployeeOrThrow };
+module.exports = { findEmployee };

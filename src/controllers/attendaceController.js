@@ -1,10 +1,8 @@
-
-const { where } = require("sequelize")
 const isWeekendInJakarta = require("../helpers/attendanceHelper")
 const { HttpError } = require("../helpers/error")
 const { generateRequestId } = require("../helpers/generateRequestId")
-const { Employee, Attendance } = require("../models/")
-const { findEmployeeOrThrow } = require("../helpers/services/employeeHelpers")
+const { Attendance } = require("../models/")
+const { findEmployee } = require("../helpers/services/employeeHelpers")
 
 class AttendaceController {
     static async employeeCheckIn(req, res, next) {
@@ -12,7 +10,10 @@ class AttendaceController {
             const {id: employee_id, username} = req.user
             const request_ip = req.request_ip
 
-            const employeeFound = await findEmployeeOrThrow(employee_id, username)
+            const employeeFound = await findEmployee(employee_id, username)
+            if (!employeeFound) {
+                throw new HttpError(404, "Employee not found")
+            }
 
             // add the record to the attendance
             const check_in_time = new Date()
@@ -31,6 +32,7 @@ class AttendaceController {
 
             res.status(200).json({
                 status_code: 200,
+                id: data.id,
                 message: `${username} Check-in Success`,
                 check_in_time
             })
@@ -77,8 +79,9 @@ class AttendaceController {
                 }
             );
 
-         res.status(200).json({
+            res.status(200).json({
                 status_code: 200,
+                id: data.id,
                 message: `${username} Check-out Success`,
                 check_out_time
             })

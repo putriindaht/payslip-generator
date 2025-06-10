@@ -9,7 +9,7 @@ router.post("/login/employee", UserController.employeeLogin);
 router.post("/login/admin", UserController.adminLogin);
 
 router.use(authentication)
-router.post("/check-ins", AttendaceController.employeeCheckIn);
-router.patch("/check-outs/:id", AttendaceController.employeeCheckOut);
+router.post("/check-in", employeeAuthorization, AttendaceController.employeeCheckIn);
+router.patch("/check-out/:id", employeeAuthorization, AttendaceController.employeeCheckOut);
 
 module.exports = router

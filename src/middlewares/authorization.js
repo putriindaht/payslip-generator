@@ -17,7 +17,7 @@ async function adminAuthorization(req, res, next) {
 async function employeeAuthorization(req, res, next) {
     try {
         const { role } = req.user
-
+        console.log("halo")
         if (role === "employee") {
             next()
         } else {
