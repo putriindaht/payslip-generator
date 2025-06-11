@@ -33,7 +33,7 @@ class AttendaceController {
             res.status(200).json({
                 status_code: 200,
                 attendance_id: data.id,
-                message: `${username} Check-in Success`,
+                message: `${username} Check-in Successfull`,
                 check_in_time
             })
 
@@ -82,7 +82,7 @@ class AttendaceController {
             res.status(200).json({
                 status_code: 200,
                 attendance_id: data.id,
-                message: `${username} Check-out Success`,
+                message: `${username} Check-out Successfull`,
                 check_out_time
             })
 

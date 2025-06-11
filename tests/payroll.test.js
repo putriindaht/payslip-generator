@@ -2,6 +2,7 @@ const request = require('supertest');
 const { app } = require('../src/app');// Your Express app
 const { sequelize, Admin, Payroll, Employee, Attendance, Overtime, Reimbursement, Payslip } = require('../src/models');
 const { generateRequestId } = require('../src/helpers/generateRequestId');
+const { where } = require('sequelize');
 
 // Helpers to parse dates
 defineProperty = Date.prototype;
@@ -63,7 +64,7 @@ describe('POST /payroll-periods', () => {
 
     it('should create a payroll period', async () => {
         await Payroll.destroy({ where: {created_by: adminId} });
-        
+
         const res = await request(app)
         .post('/payroll-periods')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -158,18 +159,22 @@ describe('POST /payroll-runs', () => {
 
     it('should process payroll and create payslips', async () => {
         // Reset run flags
-        await payroll.update({ run_at: null, completed_at: null });
+        await payroll.update({ run_at: null, completed_at: null }, { where: { id: payroll.id}});
 
         const res = await request(app)
         .patch(`/payroll-runs/${payroll.id}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
         expect(res.status).toBe(200);
+        expect(res.body).toHaveProperty('message', 'Payroll completed');
 
+        // Check payslips are created in DB
         const payslips = await Payslip.findAll({ where: { payroll_id: payroll.id } });
         expect(payslips.length).toBeGreaterThan(0);
 
+        // Check run/completed timestamps updated
         const updated = await Payroll.findByPk(payroll.id);
+        console.log(updated)
         expect(updated.run_at).not.toBeNull();
         expect(updated.completed_at).not.toBeNull();
     });

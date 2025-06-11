@@ -90,7 +90,7 @@ describe('Attendance Check-In Endpoint', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body).toHaveProperty('check_in_time');
 
-        attendanceId = res.body.id;
+        attendanceId = res.body.attendance_id;
         expect(attendanceId).toBeDefined();
     });
 
