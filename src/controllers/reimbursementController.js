@@ -38,7 +38,7 @@ class ReimbursementController {
             })
 
         } catch (error) {
-            console.error("error in employeeCheckIn", error)
+            console.error("error in submitReimbursement", error)
             next(error)
         }
     }
